@@ -631,6 +631,135 @@ body {
     }
 }
 
+/* Calendar View Styles */
+.calendar-container {
+    width: 100%;
+    margin-top: 0;
+    margin-left: -25px;
+    margin-right: -25px;
+    padding: 20px 25px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
+
+.calendar-header {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.calendar-day-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.calendar-day-label {
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    padding: 8px 4px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-cell {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 8px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.calendar-cell:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-cell-empty {
+    background: transparent;
+    border: none;
+    min-height: 100px;
+}
+
+.calendar-cell-empty:hover {
+    background: transparent;
+    transform: none;
+    box-shadow: none;
+}
+
+.calendar-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.calendar-income {
+    font-size: 11px;
+    font-weight: 600;
+    color: #16a085;
+    margin-top: 4px;
+    text-align: center;
+    width: 100%;
+    padding: 2px 4px;
+    background: rgba(22, 160, 133, 0.1);
+    border-radius: 4px;
+}
+
+.calendar-expenditure {
+    font-size: 11px;
+    font-weight: 600;
+    color: #e74c3c;
+    margin-top: 4px;
+    text-align: center;
+    width: 100%;
+    padding: 2px 4px;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: 4px;
+}
+
+/* Responsive calendar styling */
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 12px;
+    }
+
+    .calendar-cell {
+        min-height: 80px;
+        padding: 8px 6px;
+    }
+
+    .calendar-date {
+        font-size: 14px;
+    }
+
+    .calendar-income,
+    .calendar-expenditure {
+        font-size: 10px;
+    }
+}
+
 /* Calorie Activity List (right section) */
 .calorie-activity-list {
     margin-top: 15px;

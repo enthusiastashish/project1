@@ -109,7 +109,14 @@ monthOptions.forEach(option => {
         // Reset pages and re-render everything
         activityPage = 1;
         caloriePage = 1;
-        renderActivities();
+        const activePeriod = document.querySelector('.option-btn.active')?.textContent.trim() || 'Daily';
+        if (activePeriod === 'Monthly') {
+            renderMonthlyTable();
+        } else if (activePeriod === 'Calendar') {
+            renderCalendar();
+        } else {
+            renderActivities();
+        }
         renderCalorieActivities();
         updateStats();
     });
@@ -548,6 +555,134 @@ function renderMonthlyTable() {
     activityListEl.appendChild(tableContainer);
 }
 
+// Calculate daily totals for the selected month
+function calculateDailyTotals() {
+    const currentYear = new Date().getFullYear();
+    const year = selectedMonth !== null ? currentYear : currentYear;
+    const dailyDataMap = new Map();
+
+    // Filter activities for the selected month and year
+    const monthActivities = activities.filter(act => {
+        const actMonth = getActivityMonth(act);
+        const actYear = getActivityYear(act);
+        return actMonth === selectedMonth && actYear === year;
+    });
+
+    // Group by day
+    monthActivities.forEach(act => {
+        // Extract day from date string (format: "12/4 (Mon)")
+        const dayMatch = act.date.match(/^(\d+)\//);
+        if (!dayMatch) return;
+
+        const day = parseInt(dayMatch[1]);
+        const key = day;
+
+        if (!dailyDataMap.has(key)) {
+            dailyDataMap.set(key, {
+                day: day,
+                totalIncome: 0,
+                totalExpenditure: 0
+            });
+        }
+
+        const data = dailyDataMap.get(key);
+        if (act.amount > 0) {
+            data.totalIncome += act.amount;
+        } else {
+            data.totalExpenditure += Math.abs(act.amount);
+        }
+    });
+
+    return dailyDataMap;
+}
+
+// Render calendar view
+function renderCalendar() {
+    if (!activityListEl) return;
+
+    clearActivities();
+
+    const currentYear = new Date().getFullYear();
+    const year = currentYear;
+
+    // Get first day of month and number of days
+    const firstDay = new Date(year, selectedMonth, 1).getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
+
+    // Get daily totals
+    const dailyTotals = calculateDailyTotals();
+
+    // Create calendar container
+    const calendarContainer = document.createElement('div');
+    calendarContainer.className = 'calendar-container';
+
+    // Create header with month and year
+    const calendarHeader = document.createElement('div');
+    calendarHeader.className = 'calendar-header';
+    calendarHeader.textContent = `${monthNames[selectedMonth]} ${year}`;
+    calendarContainer.appendChild(calendarHeader);
+
+    // Create day labels (Sun, Mon, Tue, etc.)
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayLabelsRow = document.createElement('div');
+    dayLabelsRow.className = 'calendar-day-labels';
+    dayLabels.forEach(day => {
+        const dayLabel = document.createElement('div');
+        dayLabel.className = 'calendar-day-label';
+        dayLabel.textContent = day;
+        dayLabelsRow.appendChild(dayLabel);
+    });
+    calendarContainer.appendChild(dayLabelsRow);
+
+    // Create calendar grid
+    const calendarGrid = document.createElement('div');
+    calendarGrid.className = 'calendar-grid';
+
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-cell calendar-cell-empty';
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    // Add cells for each day of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-cell';
+
+        const dayData = dailyTotals.get(day) || { totalIncome: 0, totalExpenditure: 0 };
+
+        // Date number
+        const dateNumber = document.createElement('div');
+        dateNumber.className = 'calendar-date';
+        dateNumber.textContent = day;
+        cell.appendChild(dateNumber);
+
+        // Income (if any)
+        if (dayData.totalIncome > 0) {
+            const incomeDiv = document.createElement('div');
+            incomeDiv.className = 'calendar-income';
+            const incomeFormatted = formatCurrency(dayData.totalIncome);
+            incomeDiv.textContent = incomeFormatted.startsWith('+') ? incomeFormatted : `+${incomeFormatted}`;
+            cell.appendChild(incomeDiv);
+        }
+
+        // Expenditure (if any)
+        if (dayData.totalExpenditure > 0) {
+            const expenditureDiv = document.createElement('div');
+            expenditureDiv.className = 'calendar-expenditure';
+            const expFormatted = formatCurrency(-dayData.totalExpenditure);
+            expenditureDiv.textContent = expFormatted;
+            cell.appendChild(expenditureDiv);
+        }
+
+        calendarGrid.appendChild(cell);
+    }
+
+    calendarContainer.appendChild(calendarGrid);
+    activityListEl.appendChild(calendarContainer);
+}
+
 // Wire option buttons to filter the activity list
 optionButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -558,6 +693,9 @@ optionButtons.forEach(btn => {
         // If Monthly is selected, show the monthly table
         if (period === 'Monthly') {
             renderMonthlyTable();
+        } else if (period === 'Calendar') {
+            // If Calendar is selected, show the calendar view
+            renderCalendar();
         } else {
             // Otherwise, show regular activity list
             renderActivities(period);
