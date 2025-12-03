@@ -1318,12 +1318,34 @@ if (statisticsBtn) {
 }
 
 function toggleStatisticsView() {
+    const optionButtons = document.querySelectorAll('.option-btn');
+    const comparativeLink = document.getElementById('comparativeLink');
+    const statsContainer = document.querySelector('.stats-container');
+    const mainContent = document.getElementById('mainContent');
+
     if (statisticsMode) {
         // Show statistics, hide lists
         if (activityListEl) activityListEl.style.display = 'none';
         if (calorieActivityListEl) calorieActivityListEl.style.display = 'none';
         if (activityStatisticsView) activityStatisticsView.style.display = 'block';
         if (calorieStatisticsView) calorieStatisticsView.style.display = 'block';
+
+        // Disable option buttons (Daily, Monthly, Calendar, Yearly)
+        optionButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
+
+        // Disable Comparative button
+        if (comparativeLink) {
+            comparativeLink.style.pointerEvents = 'none';
+            comparativeLink.style.opacity = '0.5';
+            comparativeLink.classList.add('disabled');
+        }
+
+        // Add statistics view class to change background
+        if (statsContainer) statsContainer.classList.add('statistics-active');
+        if (mainContent) mainContent.classList.add('statistics-active');
 
         // Render charts
         renderStatisticsCharts();
@@ -1333,6 +1355,23 @@ function toggleStatisticsView() {
         if (calorieActivityListEl) calorieActivityListEl.style.display = '';
         if (activityStatisticsView) activityStatisticsView.style.display = 'none';
         if (calorieStatisticsView) calorieStatisticsView.style.display = 'none';
+
+        // Enable option buttons
+        optionButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        });
+
+        // Enable Comparative button
+        if (comparativeLink) {
+            comparativeLink.style.pointerEvents = '';
+            comparativeLink.style.opacity = '';
+            comparativeLink.classList.remove('disabled');
+        }
+
+        // Remove statistics view class
+        if (statsContainer) statsContainer.classList.remove('statistics-active');
+        if (mainContent) mainContent.classList.remove('statistics-active');
 
         // Destroy charts to free memory
         destroyCharts();
@@ -1344,6 +1383,11 @@ function destroyCharts() {
     if (activityCategoryChartInstance) {
         activityCategoryChartInstance.destroy();
         activityCategoryChartInstance = null;
+    }
+    // Clear legend
+    const legendContainer = document.getElementById('activityChartLegend');
+    if (legendContainer) {
+        legendContainer.innerHTML = '';
     }
     if (calorieCategoryChartInstance) {
         calorieCategoryChartInstance.destroy();
@@ -1399,8 +1443,20 @@ function renderActivityCategoryChart() {
 
     if (data.length === 0) {
         ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        // Clear legend
+        const legendContainer = document.getElementById('activityChartLegend');
+        if (legendContainer) {
+            legendContainer.innerHTML = '';
+        }
         return;
     }
+
+    const colors = [
+        '#667eea', '#764ba2', '#f093fb', '#f5576c',
+        '#4facfe', '#00f2fe', '#fa709a', '#fee140',
+        '#43e97b', '#38f9d7', '#ff6b6b', '#ffa726',
+        '#66bb6a', '#ab47bc', '#ec407a'
+    ];
 
     activityCategoryChartInstance = new Chart(ctx, {
         type: 'pie',
@@ -1408,28 +1464,17 @@ function renderActivityCategoryChart() {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: [
-                    '#667eea', '#764ba2', '#f093fb', '#f5576c',
-                    '#4facfe', '#00f2fe', '#fa709a', '#fee140',
-                    '#43e97b', '#38f9d7', '#ff6b6b', '#ffa726',
-                    '#66bb6a', '#ab47bc', '#ec407a'
-                ],
+                backgroundColor: colors.slice(0, labels.length),
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'right',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12
-                        }
-                    }
+                    display: false // Hide default legend, we'll show custom one below
                 },
                 tooltip: {
                     callbacks: {
@@ -1442,6 +1487,39 @@ function renderActivityCategoryChart() {
                 }
             }
         }
+    });
+
+    // Render custom legend with totals below the chart
+    renderActivityChartLegend(labels, data, colors.slice(0, labels.length));
+}
+
+// Render custom legend for activity category chart
+function renderActivityChartLegend(labels, data, colors) {
+    const legendContainer = document.getElementById('activityChartLegend');
+    if (!legendContainer) return;
+
+    legendContainer.innerHTML = '';
+
+    labels.forEach((label, index) => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = colors[index];
+
+        const labelText = document.createElement('span');
+        labelText.className = 'legend-label';
+        labelText.textContent = label;
+
+        const valueText = document.createElement('span');
+        valueText.className = 'legend-value';
+        valueText.textContent = `₹${data[index].toLocaleString()}`;
+
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(labelText);
+        legendItem.appendChild(valueText);
+        legendContainer.appendChild(legendItem);
     });
 }
 
@@ -1648,15 +1726,22 @@ function renderJunkFoodBarChart() {
     }
 
     junkFoodBarChartInstance = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Junk Food Calories',
                 data: data,
-                backgroundColor: '#f5576c',
+                backgroundColor: 'rgba(245, 87, 108, 0.1)',
                 borderColor: '#f5576c',
-                borderWidth: 1
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: '#f5576c',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2
             }]
         },
         options: {

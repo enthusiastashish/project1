@@ -1306,6 +1306,30 @@ body {
     margin-bottom: 20px;
 }
 
+/* Left side activity chart container - larger size */
+.stats-left .statistics-view {
+    grid-column: 1 / -1;
+    margin-top: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.activity-chart-container {
+    width: 100%;
+    margin-top: 16px;
+    padding: 25px;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.activity-chart-container canvas {
+    height: 350px !important;
+    max-height: 350px !important;
+    width: 100% !important;
+}
+
 .chart-title {
     font-size: 18px;
     font-weight: 700;
@@ -1319,11 +1343,77 @@ body {
     max-width: 100%;
 }
 
-/* Adjust statistics view for left and right sides */
-.stats-left .statistics-view {
-    padding: 25px;
+/* Chart Legend Styles */
+.chart-legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid #ecf0f1;
 }
 
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.legend-label {
+    font-weight: 600;
+    color: #2c3e50;
+    flex: 1;
+}
+
+.legend-value {
+    font-weight: 700;
+    color: #1abc9c;
+    font-size: 15px;
+}
+
+/* Disabled button styles */
+.option-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.nested-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Statistics active view - background changes */
+.stats-container.statistics-active {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.main-content.statistics-active {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.statistics-active .chart-container {
+    background: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* Right side statistics view styling */
 .stats-right .statistics-view {
     padding: 25px;
 }
