@@ -230,13 +230,14 @@ document.addEventListener('click', (e) => {
 
 // Activity list data + rendering + filter by timeframe (Daily/Monthly/Calendar/Yearly)
 // Note: month is 0-based (0=January, 11=December)
+const currentYear = new Date().getFullYear();
 let activities = [
-    { date: '12/4 (Mon)', amount: -120, type: 'expense', period: 'Daily', note: 'Bought groceries', category: 'Groceries', month: 3 }, // April
-    { date: '11/4 (Sun)', amount: 110, type: 'income', period: 'Daily', note: 'Salary (partial)', category: 'Salary', month: 3 }, // April
-    { date: '10/4 (Sat)', amount: -130, type: 'expense', period: 'Monthly', note: 'Dinner out', category: 'Dining', month: 3 }, // April
-    { date: '09/4 (Fri)', amount: 200, type: 'income', period: 'Monthly', note: 'Freelance', category: 'Freelance', month: 3 }, // April
-    { date: '05/4 (Tue)', amount: -90, type: 'expense', period: 'Calendar', note: 'Taxi', category: 'Transport', month: 3 }, // April
-    { date: '01/4 (Wed)', amount: 500, type: 'income', period: 'Yearly', note: 'Bonus', category: 'Bonus', month: 3 } // April
+    { date: '12/4 (Mon)', amount: -120, type: 'expense', period: 'Daily', note: 'Bought groceries', category: 'Groceries', month: 3, year: currentYear }, // April
+    { date: '11/4 (Sun)', amount: 110, type: 'income', period: 'Daily', note: 'Salary (partial)', category: 'Salary', month: 3, year: currentYear }, // April
+    { date: '10/4 (Sat)', amount: -130, type: 'expense', period: 'Monthly', note: 'Dinner out', category: 'Dining', month: 3, year: currentYear }, // April
+    { date: '09/4 (Fri)', amount: 200, type: 'income', period: 'Monthly', note: 'Freelance', category: 'Freelance', month: 3, year: currentYear }, // April
+    { date: '05/4 (Tue)', amount: -90, type: 'expense', period: 'Calendar', note: 'Taxi', category: 'Transport', month: 3, year: currentYear }, // April
+    { date: '01/4 (Wed)', amount: 500, type: 'income', period: 'Yearly', note: 'Bonus', category: 'Bonus', month: 3, year: currentYear } // April
 ];
 
 const activityListEl = document.getElementById('activityList');
@@ -274,6 +275,20 @@ function getActivityMonth(activity) {
         return activity.month;
     }
     return getMonthFromDateString(activity.date);
+}
+
+// Helper function to get year from activity
+function getActivityYear(activity) {
+    if (activity.year !== undefined) {
+        return activity.year;
+    }
+    // Extract year from date string or default to current year
+    if (activity.date) {
+        // Try to extract year from date if available, otherwise use current year
+        const currentYear = new Date().getFullYear();
+        return currentYear;
+    }
+    return new Date().getFullYear();
 }
 
 // Filter activities by selected month
@@ -414,34 +429,48 @@ function startEditActivity(index) {
     }
 }
 
-// Calculate monthly totals for all months
+// Calculate monthly totals for all months across all years
 function calculateMonthlyTotals() {
-    const monthlyData = [];
+    const monthlyDataMap = new Map(); // Use Map to group by year-month
 
-    for (let month = 0; month < 12; month++) {
-        const monthActivities = activities.filter(act => {
-            const actMonth = getActivityMonth(act);
-            return actMonth === month;
-        });
+    // Get all unique year-month combinations from activities
+    activities.forEach(act => {
+        const actMonth = getActivityMonth(act);
+        const actYear = getActivityYear(act);
 
-        const totalIncome = monthActivities.reduce((sum, act) => {
-            return sum + (act.amount > 0 ? act.amount : 0);
-        }, 0);
+        if (actMonth === null) return; // Skip if month is invalid
 
-        const totalExpenditure = monthActivities.reduce((sum, act) => {
-            return sum + (act.amount < 0 ? Math.abs(act.amount) : 0);
-        }, 0);
+        const key = `${actYear}-${actMonth}`;
 
-        const total = totalIncome - totalExpenditure;
+        if (!monthlyDataMap.has(key)) {
+            monthlyDataMap.set(key, {
+                year: actYear,
+                month: actMonth,
+                monthName: monthNames[actMonth],
+                totalIncome: 0,
+                totalExpenditure: 0,
+                total: 0
+            });
+        }
 
-        monthlyData.push({
-            month: month,
-            monthName: monthNames[month],
-            totalIncome: totalIncome,
-            totalExpenditure: totalExpenditure,
-            total: total
-        });
-    }
+        const data = monthlyDataMap.get(key);
+        if (act.amount > 0) {
+            data.totalIncome += act.amount;
+        } else {
+            data.totalExpenditure += Math.abs(act.amount);
+        }
+        data.total = data.totalIncome - data.totalExpenditure;
+    });
+
+    // Convert Map to Array and sort by year-month descending (latest first)
+    const monthlyData = Array.from(monthlyDataMap.values());
+    monthlyData.sort((a, b) => {
+        // Sort by year descending, then by month descending
+        if (b.year !== a.year) {
+            return b.year - a.year;
+        }
+        return b.month - a.month;
+    });
 
     return monthlyData;
 }
@@ -482,10 +511,10 @@ function renderMonthlyTable() {
         const row = document.createElement('tr');
         row.className = 'monthly-table-row';
 
-        // Month name
+        // Month name with year
         const monthCell = document.createElement('td');
         monthCell.className = 'monthly-table-month';
-        monthCell.textContent = data.monthName;
+        monthCell.textContent = `${data.monthName} ${data.year}`;
         row.appendChild(monthCell);
 
         // Total Income
@@ -572,10 +601,14 @@ function loadData() {
         if (a) activities = JSON.parse(a);
         if (c) calorieActivities = JSON.parse(c);
 
-        // Backward compatibility: add month to activities that don't have it
+        // Backward compatibility: add month and year to activities that don't have it
+        const currentYear = new Date().getFullYear();
         activities.forEach(act => {
             if (act.month === undefined) {
                 act.month = getMonthFromDateString(act.date);
+            }
+            if (act.year === undefined) {
+                act.year = currentYear; // Default to current year for backward compatibility
             }
         });
 
@@ -854,6 +887,7 @@ if (expenseForm) {
         const weekday = now.toLocaleString('en-US', { weekday: 'short' });
         const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
         const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
         // Add as expense (negative amount)
         if (expenseEditIndex !== null) {
@@ -863,6 +897,7 @@ if (expenseForm) {
             activities[expenseEditIndex].note = noteVal;
             activities[expenseEditIndex].date = dateStr;
             activities[expenseEditIndex].month = currentMonth;
+            activities[expenseEditIndex].year = currentYear;
             expenseEditIndex = null;
         } else {
             const newEntry = {
@@ -872,7 +907,8 @@ if (expenseForm) {
                 period: currentFilter || 'Daily',
                 note: noteVal,
                 category: catVal || '',
-                month: currentMonth
+                month: currentMonth,
+                year: currentYear
             };
             activities.unshift(newEntry);
         }
@@ -934,6 +970,7 @@ if (incomeForm) {
         const weekday = now.toLocaleString('en-US', { weekday: 'short' });
         const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
         const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
         if (incomeEditIndex !== null) {
             activities[incomeEditIndex].amount = Math.abs(amtVal);
@@ -941,6 +978,7 @@ if (incomeForm) {
             activities[incomeEditIndex].note = noteVal;
             activities[incomeEditIndex].date = dateStr;
             activities[incomeEditIndex].month = currentMonth;
+            activities[incomeEditIndex].year = currentYear;
             incomeEditIndex = null;
         } else {
             const newEntry = {
@@ -950,7 +988,8 @@ if (incomeForm) {
                 period: currentFilter || 'Daily',
                 note: noteVal,
                 category: catVal || '',
-                month: currentMonth
+                month: currentMonth,
+                year: currentYear
             };
             activities.unshift(newEntry);
         }
@@ -1036,9 +1075,10 @@ if (foodForm) {
 
         const noteVal = foodNote.value.trim();
 
-        // Get current month
+        // Get current month and year
         const now = new Date();
         const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
 
         // Create a new food entry for calorie activities
         const newFoodEntry = {
@@ -1046,7 +1086,8 @@ if (foodForm) {
             calorie: calorieVal,
             category: categoryVal.charAt(0).toUpperCase() + categoryVal.slice(1),
             amount: amountVal,
-            month: currentMonth
+            month: currentMonth,
+            year: currentYear
         };
 
         // Add to calorie activities
@@ -1063,7 +1104,8 @@ if (foodForm) {
             period: currentFilter || 'Daily',
             note: noteVal || '',
             category: 'Food', // Fixed category for all food entries
-            month: currentMonth
+            month: currentMonth,
+            year: currentYear
         };
 
         activities.unshift(newActivityEntry);
