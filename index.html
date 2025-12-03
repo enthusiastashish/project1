@@ -43,7 +43,7 @@
         <div class="dropdown">
             <button class="dropdown-button">Analysis</button>
             <div class="dropdown-content">
-                <a href="#option1">Expense</a>
+                <a href="#option1" id="analysisExpenseLink">Expense</a>
                 <a href="#option2">Income</a>
             </div>
         </div>
@@ -220,6 +220,23 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Expense Analysis View (hidden by default) -->
+    <div id="expenseAnalysisView" class="expense-analysis" style="display: none;">
+        <div class="analysis-left">
+            <div class="analysis-header">
+                <h3 class="chart-title">Expenses by Day (Stacked)</h3>
+                <button id="closeExpenseAnalysis" class="close-analysis">Close</button>
+            </div>
+            <div class="analysis-chart-container chart-container">
+                <canvas id="expenseStackedBar"></canvas>
+            </div>
+        </div>
+        <div class="analysis-right">
+            <h3 class="chart-title">Top Categories</h3>
+            <div id="expenseTopCategories" class="chart-legend"></div>
         </div>
     </div>
 

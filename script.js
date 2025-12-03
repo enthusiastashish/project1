@@ -1780,3 +1780,164 @@ function renderJunkFoodBarChart() {
         }
     });
 }
+
+// ---------- Expense Analysis (Stacked daily bars) ----------
+const expenseStackedChartEl = document.getElementById('expenseStackedBar');
+let expenseStackedChartInstance = null;
+const categoryColorMap = {};
+const categoryPalette = [
+    '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#fa709a', '#fee140', '#43e97b', '#38f9d7', '#ff6b6b', '#ffa726'
+];
+
+function colorForCategory(cat) {
+    if (categoryColorMap[cat]) return categoryColorMap[cat];
+    const assigned = categoryPalette[Object.keys(categoryColorMap).length % categoryPalette.length];
+    categoryColorMap[cat] = assigned;
+    return assigned;
+}
+
+function getExpenseStackedData() {
+    const year = new Date().getFullYear();
+    const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
+
+    // prepare day -> category -> total
+    const dailyMap = {};
+    for (let d = 1; d <= daysInMonth; d++) dailyMap[d] = {};
+
+    activities.forEach(act => {
+        const actMonth = getActivityMonth(act);
+        if (actMonth !== selectedMonth) return;
+        if (!act.amount || act.amount >= 0) return; // only expenses
+        const dayMatch = act.date && act.date.match(/^(\d+)\//);
+        if (!dayMatch) return;
+        const day = parseInt(dayMatch[1]);
+        const cat = act.category || 'Other';
+        dailyMap[day][cat] = (dailyMap[day][cat] || 0) + Math.abs(act.amount);
+    });
+
+    // collect all categories present in month
+    const categoriesSet = new Set();
+    Object.values(dailyMap).forEach(catObj => {
+        Object.keys(catObj).forEach(c => categoriesSet.add(c));
+    });
+    const categories = Array.from(categoriesSet);
+
+    const labels = Array.from({ length: daysInMonth }, (_, i) => String(i + 1));
+
+    const datasets = categories.map(cat => ({
+        label: cat,
+        backgroundColor: colorForCategory(cat),
+        data: labels.map((_, idx) => dailyMap[idx + 1][cat] || 0),
+        stack: 'expenses'
+    }));
+
+    return { labels, datasets, categories };
+}
+
+function renderExpenseAnalysis() {
+    const el = document.getElementById('expenseAnalysisView');
+    if (!el) return;
+
+    const ctx = document.getElementById('expenseStackedBar');
+    if (!ctx) return;
+
+    const { labels, datasets, categories } = getExpenseStackedData();
+
+    // destroy previous
+    if (expenseStackedChartInstance) {
+        expenseStackedChartInstance.destroy();
+        expenseStackedChartInstance = null;
+    }
+
+    expenseStackedChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            return `${ctx.dataset.label}: ₹${ctx.parsed.y?.toLocaleString() || 0}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { stacked: true, title: { display: true, text: 'Day' } },
+                y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Spending (₹)' } }
+            }
+        }
+    });
+
+    // Build right side sorted top categories
+    const topContainer = document.getElementById('expenseTopCategories');
+    if (!topContainer) return;
+    topContainer.innerHTML = '';
+
+    // compute totals per category
+    const totals = {};
+    datasets.forEach(ds => {
+        const total = ds.data.reduce((s, v) => s + (Number(v) || 0), 0);
+        totals[ds.label] = total;
+    });
+
+    const sorted = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+
+    sorted.forEach(cat => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+
+        const colorBox = document.createElement('div');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = colorForCategory(cat);
+
+        const labelText = document.createElement('span');
+        labelText.className = 'legend-label';
+        labelText.textContent = cat;
+
+        const valueText = document.createElement('span');
+        valueText.className = 'legend-value';
+        valueText.textContent = `₹${(totals[cat] || 0).toLocaleString()}`;
+
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(labelText);
+        legendItem.appendChild(valueText);
+
+        topContainer.appendChild(legendItem);
+    });
+}
+
+function showExpenseAnalysis() {
+    const stats = document.querySelector('.stats-container');
+    if (stats) stats.style.display = 'none';
+    const view = document.getElementById('expenseAnalysisView');
+    if (view) view.style.display = 'flex';
+    renderExpenseAnalysis();
+}
+
+function hideExpenseAnalysis() {
+    const stats = document.querySelector('.stats-container');
+    if (stats) stats.style.display = '';
+    const view = document.getElementById('expenseAnalysisView');
+    if (view) view.style.display = 'none';
+}
+
+// wire the navbar analysis link and close button
+const analysisExpenseLink = document.getElementById('analysisExpenseLink');
+if (analysisExpenseLink) {
+    analysisExpenseLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showExpenseAnalysis();
+    });
+}
+
+const closeExpenseAnalysisBtn = document.getElementById('closeExpenseAnalysis');
+if (closeExpenseAnalysisBtn) {
+    closeExpenseAnalysisBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideExpenseAnalysis();
+    });
+}

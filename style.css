@@ -1298,6 +1298,64 @@ body {
     padding: 20px;
 }
 
+/* Expense Analysis layout */
+.expense-analysis {
+    display: flex;
+    gap: 20px;
+    margin-top: 24px;
+    padding: 10px 0 30px 0;
+}
+
+.expense-analysis .analysis-left {
+    flex: 3;
+    min-height: 420px;
+}
+
+.expense-analysis .analysis-right {
+    flex: 1;
+    min-width: 220px;
+}
+
+.analysis-chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.analysis-chart-container canvas {
+    width: 100% !important;
+    height: 380px !important;
+}
+
+.analysis-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.close-analysis {
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+    .expense-analysis {
+        flex-direction: column;
+    }
+
+    .expense-analysis .analysis-right {
+        order: 2;
+        width: 100%;
+    }
+}
+
 .chart-container {
     background: white;
     border-radius: 12px;
