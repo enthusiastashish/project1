@@ -275,6 +275,83 @@ body {
     margin: 0;
 }
 
+/* Calorie Message Box Styles */
+.calorie-message-box {
+    margin: 12px 0 20px 0;
+    padding: 14px 18px;
+    border-radius: 10px;
+    border-left: 4px solid;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.4s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.message-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.message-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Case 1: All calories within limits (Green) */
+.calorie-message-box.status-safe {
+    background: linear-gradient(135deg, rgba(43, 217, 103, 0.12) 0%, rgba(43, 217, 103, 0.08) 100%);
+    border-left-color: #2bd967;
+    color: #1e7e34;
+}
+
+.calorie-message-box.status-safe .message-icon {
+    color: #2bd967;
+}
+
+/* Case 2: At risk (90% limit crossed) - Yellow to Orange to Red gradient */
+.calorie-message-box.status-at-risk {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 152, 0, 0.15) 50%, rgba(244, 67, 54, 0.15) 100%);
+    border-left: 4px solid;
+    border-image: linear-gradient(180deg, #ffc107 0%, #ff9800 50%, #f44336 100%) 1;
+    color: #c65911;
+}
+
+.calorie-message-box.status-at-risk .message-icon {
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 50%, #f44336 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Case 3: Limit breached - Subtle motivational */
+.calorie-message-box.status-breached {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.08) 0%, rgba(103, 58, 183, 0.08) 100%);
+    border-left-color: #9c27b0;
+    color: #4a235a;
+}
+
+.calorie-message-box.status-breached .message-icon {
+    color: #9c27b0;
+}
+
 .welcome-text {
     font-size: 28px;
     color: #2c3e50;

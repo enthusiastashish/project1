@@ -931,6 +931,134 @@ function updateStats() {
     if (expensesStatEl) expensesStatEl.textContent = formatCurrency(expensesSum);
     if (totalStatEl) totalStatEl.textContent = formatCurrency(net);
     if (caloriesStatEl) caloriesStatEl.textContent = String(caloriesSum);
+
+    // Update calorie message box
+    updateCalorieMessageBox();
+}
+
+// Update calorie goal status message box
+function updateCalorieMessageBox() {
+    if (!userGoals || goalsPaused) {
+        const msgBox = document.getElementById('calorieMessageBox');
+        if (msgBox) msgBox.style.display = 'none';
+        return;
+    }
+
+    const msgBox = document.getElementById('calorieMessageBox');
+    const msgIcon = document.getElementById('messageIcon');
+    const msgText = document.getElementById('messageText');
+
+    if (!msgBox) return;
+
+    // Get current date's day
+    const today = new Date().getDate();
+
+    // Calculate today's total calories and junk calories
+    const todayCalories = calorieActivities
+        .filter(cal => {
+            const calMonth = cal.month !== undefined ? cal.month : new Date().getMonth();
+            if (calMonth !== selectedMonth) return false;
+            // Extract day from date
+            if (cal.date) {
+                const dayMatch = cal.date.match(/^(\d+)\//);
+                if (dayMatch) {
+                    const day = parseInt(dayMatch[1]);
+                    return day === today;
+                }
+            }
+            return false;
+        })
+        .reduce((s, cal) => s + (Number(cal.calorie) || 0), 0);
+
+    // Calculate today's junk calories
+    const todayJunkCalories = calorieActivities
+        .filter(cal => {
+            const calMonth = cal.month !== undefined ? cal.month : new Date().getMonth();
+            if (calMonth !== selectedMonth) return false;
+            if (cal.date) {
+                const dayMatch = cal.date.match(/^(\d+)\//);
+                if (dayMatch) {
+                    const day = parseInt(dayMatch[1]);
+                    if (day !== today) return false;
+                }
+            }
+            const mappedCat = mapCalorieCategory(cal.category);
+            return mappedCat === 'Junk';
+        })
+        .reduce((s, cal) => s + (Number(cal.calorie) || 0), 0);
+
+    // Calculate this month's total and junk calories
+    const thisMonthCalories = calorieActivities
+        .filter(cal => {
+            const calMonth = cal.month !== undefined ? cal.month : new Date().getMonth();
+            return calMonth === selectedMonth;
+        })
+        .reduce((s, cal) => s + (Number(cal.calorie) || 0), 0);
+
+    const thisMonthJunkCalories = calorieActivities
+        .filter(cal => {
+            const calMonth = cal.month !== undefined ? cal.month : new Date().getMonth();
+            if (calMonth !== selectedMonth) return false;
+            const mappedCat = mapCalorieCategory(cal.category);
+            return mappedCat === 'Junk';
+        })
+        .reduce((s, cal) => s + (Number(cal.calorie) || 0), 0);
+
+    // Get goal limits
+    const dailyLimit = userGoals.dailyCalorieLimit || 0;
+    const dailyJunkLimit = userGoals.dailyJunkFoodLimit || 0;
+    const monthlyJunkLimit = userGoals.monthlyJunkFoodLimit || 0;
+
+    // Check status
+    let status = 'safe';
+    let message = '';
+    let icon = '✓';
+
+    const dailyPercent = dailyLimit > 0 ? (todayCalories / dailyLimit) * 100 : 0;
+    const dailyJunkPercent = dailyJunkLimit > 0 ? (todayJunkCalories / dailyJunkLimit) * 100 : 0;
+    const monthlyJunkPercent = monthlyJunkLimit > 0 ? (thisMonthJunkCalories / monthlyJunkLimit) * 100 : 0;
+
+    // Check if any limit breached
+    if (dailyPercent > 100 || dailyJunkPercent > 100 || monthlyJunkPercent > 100) {
+        status = 'breached';
+        icon = '💪';
+
+        const breachedGoals = [];
+        if (dailyPercent > 100) breachedGoals.push('daily calorie');
+        if (dailyJunkPercent > 100) breachedGoals.push('daily junk food');
+        if (monthlyJunkPercent > 100) breachedGoals.push('monthly junk food');
+
+        message = `You've exceeded your ${breachedGoals.join(', ')} limit. Don't worry, you can do better tomorrow! Stay focused on your health goals.`;
+    }
+    // Check if any at risk (90% or more)
+    else if (dailyPercent >= 90 || dailyJunkPercent >= 90 || monthlyJunkPercent >= 90) {
+        status = 'at-risk';
+        icon = '⚠️';
+
+        const atRiskGoals = [];
+        if (dailyPercent >= 90) atRiskGoals.push('daily calorie');
+        if (dailyJunkPercent >= 90) atRiskGoals.push('daily junk food');
+        if (monthlyJunkPercent >= 90) atRiskGoals.push('monthly junk food');
+
+        message = `You might be risking your ${atRiskGoals.join(', ')} goals. Be mindful with your next meal choices!`;
+    }
+    // All within limits
+    else {
+        status = 'safe';
+        icon = '✓';
+        const safeGoals = [];
+        if (dailyLimit > 0) safeGoals.push(`daily calorie (${todayCalories}/${dailyLimit})`);
+        if (dailyJunkLimit > 0) safeGoals.push(`junk food (${todayJunkCalories}/${dailyJunkLimit})`);
+        message = `Great! Your ${safeGoals.length > 0 ? safeGoals.join(', ') : 'calorie intake'} is within limits. Keep it up!`;
+    }
+
+    // Remove all status classes
+    msgBox.classList.remove('status-safe', 'status-at-risk', 'status-breached');
+    msgBox.classList.add(`status-${status}`);
+
+    if (msgIcon) msgIcon.textContent = icon;
+    if (msgText) msgText.textContent = message;
+    msgBox.style.display = 'block';
 }
 
 // Calorie edit modal handlers
