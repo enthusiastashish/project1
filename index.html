@@ -44,7 +44,6 @@
             <button class="dropdown-button">Analysis</button>
             <div class="dropdown-content">
                 <a href="#option1" id="analysisExpenseLink">Expense</a>
-                <a href="#option2">Income</a>
             </div>
         </div>
         <div class="profile-dropdown">
@@ -64,8 +63,6 @@
     <div class="sidebar" id="sidebar">
         <button class="close-sidebar" id="closeSidebarBtn">&times;</button>
         <a href="#dashboard">Dashboard</a>
-        <a href="#expenses">Expenses</a>
-        <a href="#income">Income</a>
         <a href="#budget">Budget</a>
         <a href="#reports">Reports</a>
         <a href="#settings">Settings</a>
@@ -165,8 +162,9 @@
                             <button class="nested-btn" id="primaryBtn">Absolute</button>
                             <div class="nested-content" id="primaryContent">
                                 <a href="#absolute" class="nested-option active" data-menu="primary">Absolute</a>
-                                <a href="#comparative" class="nested-option" data-menu="primary"
-                                    id="comparativeLink">Comparative</a>
+                                <a href="#comparative" class="nested-option disabled" data-menu="primary"
+                                    id="comparativeLink" title="Not enough data"
+                                    style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">Comparative</a>
                             </div>
                         </div>
                         <div class="nested-menu-secondary">
