@@ -414,13 +414,125 @@ function startEditActivity(index) {
     }
 }
 
+// Calculate monthly totals for all months
+function calculateMonthlyTotals() {
+    const monthlyData = [];
+
+    for (let month = 0; month < 12; month++) {
+        const monthActivities = activities.filter(act => {
+            const actMonth = getActivityMonth(act);
+            return actMonth === month;
+        });
+
+        const totalIncome = monthActivities.reduce((sum, act) => {
+            return sum + (act.amount > 0 ? act.amount : 0);
+        }, 0);
+
+        const totalExpenditure = monthActivities.reduce((sum, act) => {
+            return sum + (act.amount < 0 ? Math.abs(act.amount) : 0);
+        }, 0);
+
+        const total = totalIncome - totalExpenditure;
+
+        monthlyData.push({
+            month: month,
+            monthName: monthNames[month],
+            totalIncome: totalIncome,
+            totalExpenditure: totalExpenditure,
+            total: total
+        });
+    }
+
+    return monthlyData;
+}
+
+// Render monthly summary table
+function renderMonthlyTable() {
+    if (!activityListEl) return;
+
+    clearActivities();
+
+    const monthlyData = calculateMonthlyTotals();
+
+    // Create table container
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'monthly-table-container';
+
+    // Create table
+    const table = document.createElement('table');
+    table.className = 'monthly-table';
+
+    // Create header row
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+
+    const headers = ['Months', 'Total Income', 'Total Expenditure', 'Total'];
+    headers.forEach(headerText => {
+        const th = document.createElement('th');
+        th.textContent = headerText;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create body
+    const tbody = document.createElement('tbody');
+
+    monthlyData.forEach(data => {
+        const row = document.createElement('tr');
+        row.className = 'monthly-table-row';
+
+        // Month name
+        const monthCell = document.createElement('td');
+        monthCell.className = 'monthly-table-month';
+        monthCell.textContent = data.monthName;
+        row.appendChild(monthCell);
+
+        // Total Income
+        const incomeCell = document.createElement('td');
+        incomeCell.className = 'monthly-table-income';
+        incomeCell.textContent = formatCurrency(data.totalIncome);
+        row.appendChild(incomeCell);
+
+        // Total Expenditure
+        const expenditureCell = document.createElement('td');
+        expenditureCell.className = 'monthly-table-expenditure';
+        expenditureCell.textContent = formatCurrency(data.totalExpenditure);
+        row.appendChild(expenditureCell);
+
+        // Total (with conditional styling)
+        const totalCell = document.createElement('td');
+        totalCell.className = 'monthly-table-total';
+        totalCell.textContent = formatCurrency(data.total);
+        if (data.total < 0) {
+            totalCell.classList.add('negative');
+        } else if (data.total > 0) {
+            totalCell.classList.add('positive');
+        }
+        row.appendChild(totalCell);
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    tableContainer.appendChild(table);
+    activityListEl.appendChild(tableContainer);
+}
+
 // Wire option buttons to filter the activity list
 optionButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
         optionButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const period = btn.textContent.trim();
-        renderActivities(period);
+
+        // If Monthly is selected, show the monthly table
+        if (period === 'Monthly') {
+            renderMonthlyTable();
+        } else {
+            // Otherwise, show regular activity list
+            renderActivities(period);
+        }
     });
 });
 
