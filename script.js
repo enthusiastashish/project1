@@ -1941,3 +1941,248 @@ if (closeExpenseAnalysisBtn) {
         hideExpenseAnalysis();
     });
 }
+
+// ========== GOALS MANAGEMENT ==========
+const GOALS_STORAGE_KEY = 'spendwell_goals_v1';
+const GOALS_INITIALIZED_KEY = 'spendwell_goals_initialized';
+
+let userGoals = null;
+let goalsPaused = false;
+
+function initializeGoalsOnFirstVisit() {
+    const initialized = localStorage.getItem(GOALS_INITIALIZED_KEY);
+    if (!initialized) {
+        // First visit - show setup modal
+        showGoalsSetupModal();
+    } else {
+        // Load existing goals
+        loadGoals();
+    }
+}
+
+function loadGoals() {
+    try {
+        const stored = localStorage.getItem(GOALS_STORAGE_KEY);
+        if (stored) {
+            userGoals = JSON.parse(stored);
+            goalsPaused = userGoals.paused || false;
+        }
+    } catch (e) {
+        console.error('Could not load goals from localStorage', e);
+    }
+}
+
+function saveGoals() {
+    try {
+        if (userGoals) {
+            userGoals.paused = goalsPaused;
+            localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(userGoals));
+            localStorage.setItem(GOALS_INITIALIZED_KEY, 'true');
+        }
+    } catch (e) {
+        console.error('Could not save goals to localStorage', e);
+    }
+}
+
+function showGoalsSetupModal() {
+    const overlay = document.getElementById('goalsSetupModalOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+}
+
+function closeGoalsSetupModal() {
+    const overlay = document.getElementById('goalsSetupModalOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+    const form = document.getElementById('goalsSetupForm');
+    if (form) form.reset();
+}
+
+function showGoalsViewModal() {
+    const overlay = document.getElementById('goalsViewModalOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        renderGoalsViewContent();
+    }
+}
+
+function closeGoalsViewModal() {
+    const overlay = document.getElementById('goalsViewModalOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function renderGoalsViewContent() {
+    const content = document.getElementById('goalsViewContent');
+    if (!content || !userGoals) return;
+
+    content.innerHTML = `
+        <div class="goals-view-content">
+            <div class="goal-item">
+                <div class="goal-label">Daily Food Spending Limit</div>
+                <div class="goal-value">₹${(userGoals.dailyFoodSpendLimit || 0).toLocaleString()}</div>
+                <span class="goal-status ${goalsPaused ? 'paused' : 'active'}">${goalsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+            </div>
+            <div class="goal-item">
+                <div class="goal-label">Monthly Food Spending Limit</div>
+                <div class="goal-value">₹${(userGoals.monthlyFoodSpendLimit || 0).toLocaleString()}</div>
+                <span class="goal-status ${goalsPaused ? 'paused' : 'active'}">${goalsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+            </div>
+            <div class="goal-item">
+                <div class="goal-label">Daily Calorie Limit</div>
+                <div class="goal-value">${(userGoals.dailyCalorieLimit || 0).toLocaleString()} cal</div>
+                <span class="goal-status ${goalsPaused ? 'paused' : 'active'}">${goalsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+            </div>
+            <div class="goal-item">
+                <div class="goal-label">Daily Junk Food Calorie Limit</div>
+                <div class="goal-value">${(userGoals.dailyJunkFoodLimit || 0).toLocaleString()} cal</div>
+                <span class="goal-status ${goalsPaused ? 'paused' : 'active'}">${goalsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+            </div>
+            <div class="goal-item">
+                <div class="goal-label">Monthly Junk Food Calorie Limit</div>
+                <div class="goal-value">${(userGoals.monthlyJunkFoodLimit || 0).toLocaleString()} cal</div>
+                <span class="goal-status ${goalsPaused ? 'paused' : 'active'}">${goalsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+            </div>
+        </div>
+    `;
+}
+
+// Setup modal handlers
+const goalsSetupModalClose = document.getElementById('goalsSetupModalClose');
+const goalsSetupForm = document.getElementById('goalsSetupForm');
+
+if (goalsSetupModalClose) {
+    goalsSetupModalClose.addEventListener('click', closeGoalsSetupModal);
+}
+
+if (goalsSetupForm) {
+    goalsSetupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const dailyFoodSpend = Number(document.getElementById('dailyFoodSpendLimit').value || 0);
+        const monthlyFoodSpend = Number(document.getElementById('monthlyFoodSpendLimit').value || 0);
+        const dailyCalorie = Number(document.getElementById('dailyCalorieLimit').value || 0);
+        const dailyJunk = Number(document.getElementById('dailyJunkFoodLimit').value || 0);
+        const monthlyJunk = Number(document.getElementById('monthlyJunkFoodLimit').value || 0);
+
+        if (!dailyFoodSpend || !monthlyFoodSpend || !dailyCalorie || !dailyJunk || !monthlyJunk) {
+            alert('Please fill in all fields with valid numbers');
+            return;
+        }
+
+        userGoals = {
+            dailyFoodSpendLimit: dailyFoodSpend,
+            monthlyFoodSpendLimit: monthlyFoodSpend,
+            dailyCalorieLimit: dailyCalorie,
+            dailyJunkFoodLimit: dailyJunk,
+            monthlyJunkFoodLimit: monthlyJunk,
+            paused: false
+        };
+
+        saveGoals();
+        closeGoalsSetupModal();
+        alert('Goals saved successfully!');
+    });
+}
+
+// Your Goals button
+const yourGoalsBtn = document.getElementById('yourGoalsBtn');
+if (yourGoalsBtn) {
+    yourGoalsBtn.addEventListener('click', () => {
+        if (!userGoals) {
+            showGoalsSetupModal();
+        } else {
+            showGoalsViewModal();
+        }
+    });
+}
+
+// Goals view modal handlers
+const goalsViewModalClose = document.getElementById('goalsViewModalClose');
+const goalsEditBtn = document.getElementById('goalsEditBtn');
+const goalsPauseBtn = document.getElementById('goalsPauseBtn');
+const goalsCloseBtn = document.getElementById('goalsCloseBtn');
+
+if (goalsViewModalClose) {
+    goalsViewModalClose.addEventListener('click', closeGoalsViewModal);
+}
+
+if (goalsCloseBtn) {
+    goalsCloseBtn.addEventListener('click', closeGoalsViewModal);
+}
+
+if (goalsEditBtn) {
+    goalsEditBtn.addEventListener('click', () => {
+        closeGoalsViewModal();
+        showGoalsEditModal();
+    });
+}
+
+if (goalsPauseBtn) {
+    goalsPauseBtn.addEventListener('click', () => {
+        goalsPaused = !goalsPaused;
+        saveGoals();
+        const btnText = goalsPauseBtn.textContent.trim();
+        goalsPauseBtn.textContent = goalsPaused ? 'Resume Goals' : 'Pause Goals';
+        renderGoalsViewContent();
+    });
+}
+
+// Edit goals modal (reuse setup modal but populate with existing values)
+function showGoalsEditModal() {
+    if (!userGoals) return;
+
+    const overlay = document.getElementById('goalsSetupModalOverlay');
+    const title = document.getElementById('goalsSetupModalTitle');
+    const form = document.getElementById('goalsSetupForm');
+    const submitBtn = document.getElementById('goalsSetupSubmit');
+
+    if (title) title.textContent = 'Edit Your Goals';
+    if (submitBtn) submitBtn.textContent = 'Update Goals';
+
+    // Populate form with existing values
+    const dailyFoodEl = document.getElementById('dailyFoodSpendLimit');
+    const monthlyFoodEl = document.getElementById('monthlyFoodSpendLimit');
+    const dailyCalEl = document.getElementById('dailyCalorieLimit');
+    const dailyJunkEl = document.getElementById('dailyJunkFoodLimit');
+    const monthlyJunkEl = document.getElementById('monthlyJunkFoodLimit');
+
+    if (dailyFoodEl) dailyFoodEl.value = userGoals.dailyFoodSpendLimit;
+    if (monthlyFoodEl) monthlyFoodEl.value = userGoals.monthlyFoodSpendLimit;
+    if (dailyCalEl) dailyCalEl.value = userGoals.dailyCalorieLimit;
+    if (dailyJunkEl) dailyJunkEl.value = userGoals.dailyJunkFoodLimit;
+    if (monthlyJunkEl) monthlyJunkEl.value = userGoals.monthlyJunkFoodLimit;
+
+    if (overlay) {
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+}
+
+// Close setup modal when clicking outside
+const goalsSetupOverlay = document.getElementById('goalsSetupModalOverlay');
+if (goalsSetupOverlay) {
+    goalsSetupOverlay.addEventListener('click', (e) => {
+        if (e.target === goalsSetupOverlay) closeGoalsSetupModal();
+    });
+}
+
+// Close view modal when clicking outside
+const goalsViewOverlay = document.getElementById('goalsViewModalOverlay');
+if (goalsViewOverlay) {
+    goalsViewOverlay.addEventListener('click', (e) => {
+        if (e.target === goalsViewOverlay) closeGoalsViewModal();
+    });
+}
+
+// Initialize goals on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initializeGoalsOnFirstVisit();
+});

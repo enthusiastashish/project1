@@ -265,6 +265,16 @@ body {
     color: #ffffff;
 }
 
+.button-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.button-group .statistics-btn {
+    margin: 0;
+}
+
 .welcome-text {
     font-size: 28px;
     color: #2c3e50;
@@ -1482,4 +1492,57 @@ body {
 
 .stats-right .statistics-view .chart-container:last-child {
     margin-bottom: 0;
+}
+
+/* Goals Modal and View Styles */
+.goals-view-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.goal-item {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 4px solid #1abc9c;
+}
+
+.goal-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.goal-value {
+    font-size: 24px;
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.goal-status {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.goal-status.active {
+    background: rgba(26, 188, 156, 0.15);
+    color: #16a085;
+}
+
+.goal-status.paused {
+    background: rgba(241, 196, 15, 0.15);
+    color: #d68910;
+}
+
+@media (max-width: 768px) {
+    .goals-view-content {
+        grid-template-columns: 1fr;
+    }
 }

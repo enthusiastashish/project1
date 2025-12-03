@@ -78,7 +78,10 @@
     <div class="main-content" id="mainContent">
         <div class="welcome-section">
             <h1 class="welcome-text">Welcome <span class="user-name" id="userName">User</span></h1>
-            <button id="statisticsBtn" class="statistics-btn">Statistics</button>
+            <div class="button-group">
+                <button id="statisticsBtn" class="statistics-btn">Statistics</button>
+                <button id="yourGoalsBtn" class="statistics-btn">Your Goals</button>
+            </div>
         </div>
         <p>Your personal finance management app</p>
 
@@ -237,6 +240,60 @@
         <div class="analysis-right">
             <h3 class="chart-title">Top Categories</h3>
             <div id="expenseTopCategories" class="chart-legend"></div>
+        </div>
+    </div>
+
+    <!-- First-Time Goals Setup Modal -->
+    <div class="modal-overlay" id="goalsSetupModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="goalsSetupModalTitle">
+            <div class="modal-header">
+                <h3 id="goalsSetupModalTitle">Set Your Goals</h3>
+                <button class="modal-close" id="goalsSetupModalClose">×</button>
+            </div>
+            <form id="goalsSetupForm" class="modal-body">
+                <label class="field">
+                    <div class="field-label">Daily Food Spending Limit (₹)</div>
+                    <input type="number" id="dailyFoodSpendLimit" placeholder="e.g. 500" min="0" step="1" required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Monthly Food Spending Limit (₹)</div>
+                    <input type="number" id="monthlyFoodSpendLimit" placeholder="e.g. 10000" min="0" step="1"
+                        required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Daily Calorie Limit</div>
+                    <input type="number" id="dailyCalorieLimit" placeholder="e.g. 2000" min="0" step="1" required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Daily Junk Food Calorie Limit</div>
+                    <input type="number" id="dailyJunkFoodLimit" placeholder="e.g. 500" min="0" step="1" required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Monthly Junk Food Calorie Limit</div>
+                    <input type="number" id="monthlyJunkFoodLimit" placeholder="e.g. 10000" min="0" step="1" required />
+                </label>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="goalsSetupSubmit">Save Goals</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Goals View Modal -->
+    <div class="modal-overlay" id="goalsViewModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="goalsViewModalTitle">
+            <div class="modal-header">
+                <h3 id="goalsViewModalTitle">Your Goals</h3>
+                <button class="modal-close" id="goalsViewModalClose">×</button>
+            </div>
+            <div class="modal-body" id="goalsViewContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="goalsEditBtn">Edit Goals</button>
+                <button type="button" class="btn btn-secondary" id="goalsPauseBtn">Pause Goals</button>
+                <button type="button" class="btn btn-secondary" id="goalsCloseBtn">Close</button>
+            </div>
         </div>
     </div>
 
