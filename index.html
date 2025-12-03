@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendWell</title>
+
+
+
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <button class="hamburger" id="hamburgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <a href="index.html" class="brand">spendwell</a>
+        <div class="dropdown">
+            <button class="dropdown-button">Month</button>
+            <div class="dropdown-content">
+                <a href="#january">January</a>
+                <a href="#february">February</a>
+                <a href="#march">March</a>
+                <a href="#april">April</a>
+                <a href="#may">May</a>
+                <a href="#june">June</a>
+                <a href="#july">July</a>
+                <a href="#august">August</a>
+                <a href="#september">September</a>
+                <a href="#october">October</a>
+                <a href="#november">November</a>
+                <a href="#december">December</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropdown-button">Analysis</button>
+            <div class="dropdown-content">
+                <a href="#option1">Expense</a>
+                <a href="#option2">Income</a>
+            </div>
+        </div>
+        <div class="profile-dropdown">
+            <button class="profile-button" id="profileBtn">
+                <span class="profile-icon">👤</span>
+                <span>Profile</span>
+            </button>
+            <div class="profile-dropdown-content" id="profileMenu">
+                <a href="#view-account">View Account</a>
+                <a href="#manage-accounts">Manage Accounts</a>
+                <a href="#logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="close-sidebar" id="closeSidebarBtn">&times;</button>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#expenses">Expenses</a>
+        <a href="#income">Income</a>
+        <a href="#budget">Budget</a>
+        <a href="#reports">Reports</a>
+        <a href="#settings">Settings</a>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="welcome-section">
+            <h1 class="welcome-text">Welcome <span class="user-name" id="userName">User</span></h1>
+            <button id="statisticsBtn" class="statistics-btn">Statistics</button>
+        </div>
+        <p>Your personal finance management app</p>
+
+        <!-- Stats Boxes -->
+        <div class="stats-container">
+            <div class="stats-left">
+                <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="stat-number" id="incomeStat">₹5,000</div>
+                    <div class="stat-label">Income</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="stat-number" id="expensesStat">₹2,500</div>
+                    <div class="stat-label">Expenses</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="stat-number" id="totalStat">₹7,500</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <!-- Options Below Stats -->
+                <div class="stats-options">
+                    <button class="option-btn active">Daily</button>
+                    <button class="option-btn">Monthly</button>
+                    <button class="option-btn">Calendar</button>
+                    <button class="option-btn">Yearly</button>
+                </div>
+                <!-- Activity List: recent entries with date and amount -->
+                <div class="activity-list" id="activityList">
+                    <div class="activity-item expense">
+                        <div class="entry-date">12/4 (Mon)</div>
+                        <div class="entry-category">Groceries</div>
+                        <div class="enry-note">Bought groceries</div>
+                        <div class="entry-amount">- ₹120</div>
+                    </div>
+                    <div class="activity-item income">
+                        <div class="entry-date">11/4 (Sun)</div>
+                        <div class="entry-category">Salary</div>
+                        <div class="enry-note">Salary (partial)</div>
+                        <div class="entry-amount">+ ₹110</div>
+                    </div>
+                    <div class="activity-item expense">
+                        <div class="entry-date">10/4 (Sat)</div>
+                        <div class="entry-category">Dining</div>
+                        <div class="enry-note">Dinner out</div>
+                        <div class="entry-amount">- ₹130</div>
+                    </div>
+                    <div class="activity-item income">
+                        <div class="entry-date">09/4 (Fri)</div>
+                        <div class="entry-category">Freelance</div>
+                        <div class="enry-note">Freelance</div>
+                        <div class="entry-amount">+ ₹200</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stats-divider"></div>
+            <div class="stats-right">
+                <div class="stats-right-content">
+                    <div class="stat-box stat-box-equal"
+                        style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="stat-number" id="caloriesStat">320</div>
+                        <div class="stat-label">Saved on Calories</div>
+                    </div>
+                    <!-- Nested Dropdown Menu -->
+                    <div class="nested-dropdown-wrapper">
+                        <div class="nested-menu-primary">
+                            <button class="nested-btn" id="primaryBtn">Absolute</button>
+                            <div class="nested-content" id="primaryContent">
+                                <a href="#absolute" class="nested-option active" data-menu="primary">Absolute</a>
+                                <a href="#comparative" class="nested-option" data-menu="primary"
+                                    id="comparativeLink">Comparative</a>
+                            </div>
+                        </div>
+                        <div class="nested-menu-secondary">
+                            <button class="nested-btn" id="secondaryBtn">Goal</button>
+                            <div class="nested-content" id="secondaryContent">
+                                <a href="#goal" class="nested-option active">Goal</a>
+                                <a href="#daily" class="nested-option">Daily</a>
+                                <a href="#monthly" class="nested-option">Monthly</a>
+                                <a href="#yearly" class="nested-option">Yearly</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calorie Activity List -->
+                    <div class="calorie-activity-list" id="calorieActivityList">
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Pizza - 280 cal</div>
+                            <div class="entry-category">Food</div>
+                            <div class="entry-calorie">280</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Salad - 120 cal</div>
+                            <div class="entry-category">Healthy</div>
+                            <div class="entry-calorie">120</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Burger - 540 cal</div>
+                            <div class="entry-category">Fast Food</div>
+                            <div class="entry-calorie">540</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Ice Cream - 250 cal</div>
+                            <div class="entry-category">Dessert</div>
+                            <div class="entry-calorie">250</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Chicken Bowl - 450 cal</div>
+                            <div class="entry-category">Lunch</div>
+                            <div class="entry-calorie">450</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Coffee - 50 cal</div>
+                            <div class="entry-category">Beverage</div>
+                            <div class="entry-calorie">50</div>
+                        </div>
+                        <div class="calorie-activity-item">
+                            <div class="entry-expense">Pasta - 600 cal</div>
+                            <div class="entry-category">Dinner</div>
+                            <div class="entry-calorie">600</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container" id="fabContainer">
+        <button class="fab-main" id="fabBtn">
+            <span class="fab-icon">+</span>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <a href="#spending" class="fab-option" data-option="spending">
+                <span class="fab-option-icon">💰</span>
+                <span class="fab-option-label">Spending</span>
+            </a>
+            <a href="#income" class="fab-option" data-option="income">
+                <span class="fab-option-icon">📈</span>
+                <span class="fab-option-label">Income</span>
+            </a>
+            <a href="#food" class="fab-option" data-option="food">
+                <span class="fab-option-icon">🍕</span>
+                <span class="fab-option-label">Food</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Expense Modal (opened from FAB Spending) -->
+    <div class="modal-overlay" id="expenseModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="expenseModalTitle">
+            <div class="modal-header">
+                <h3 id="expenseModalTitle">Add Expense</h3>
+                <button class="modal-close" id="expenseModalClose">×</button>
+            </div>
+            <form id="expenseForm" class="modal-body">
+                <label class="field">
+                    <div class="field-label">Amount</div>
+                    <input type="number" step=".001" id="expenseAmount" placeholder="e.g. 120" required />
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Category</div>
+                    <select id="expenseCategory" required>
+                        <option value="Social Life">Social Life</option>
+                        <option value="Pets">Pets</option>
+                        <option value="Household">Household</option>
+                        <option value="Culture">Culture</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Apparel">Apparel</option>
+                        <option value="Beauty">Beauty</option>
+                        <option value="Health">Health</option>
+                        <option value="Education">Education</option>
+                        <option value="Gift">Gift</option>
+                        <option value="Other">Other</option>
+                        <option value="Receivables">Receivables</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Note</div>
+                    <input type="text" id="expenseNote" placeholder="Bought fruits and veggies" />
+                </label>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="expenseCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="expenseSubmit">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Income Modal (opened from FAB Income) -->
+    <div class="modal-overlay" id="incomeModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="incomeModalTitle">
+            <div class="modal-header">
+                <h3 id="incomeModalTitle">Add Income</h3>
+                <button class="modal-close" id="incomeModalClose">×</button>
+            </div>
+            <form id="incomeForm" class="modal-body">
+                <label class="field">
+                    <div class="field-label">Amount</div>
+                    <input type="number" step="0.01" id="incomeAmount" placeholder="e.g. 1200" required />
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Category</div>
+                    <select id="incomeCategory" required>
+                        <option value="Salary">Salary</option>
+                        <option value="Allowance">Allowance</option>
+                        <option value="Bonus">Bonus</option>
+                        <option value="Petty Cash">Petty Cash</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Note</div>
+                    <input type="text" id="incomeNote" placeholder="Salary for Nov" />
+                </label>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="incomeCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="incomeSubmit">Add Income</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Calorie Edit Modal -->
+    <div class="modal-overlay" id="calorieEditModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="calorieEditModalTitle">
+            <div class="modal-header">
+                <h3 id="calorieEditModalTitle">Edit Calorie Entry</h3>
+                <button class="modal-close" id="calorieEditModalClose">×</button>
+            </div>
+            <form id="calorieEditForm" class="modal-body">
+                <label class="field">
+                    <div class="field-label">Name</div>
+                    <input type="text" id="calorieName" required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Calories</div>
+                    <input type="number" id="calorieCount" required />
+                </label>
+                <label class="field">
+                    <div class="field-label">Category</div>
+                    <select id="calorieCategory">
+                        <option>Fast Food</option>
+                        <option>Healthy</option>
+                        <option>Beverage</option>
+                        <option>Lunch</option>
+                        <option>Dessert</option>
+                        <option>Other</option>
+                    </select>
+                </label>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="calorieEditCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="calorieEditSubmit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#about">About Us</a>
+                <a href="#contact">Contact Us</a>
+                <a href="#donate">Donate</a>
+            </div>
+            <div class="footer-why">
+                <a href="#why-spendwell" class="why-link">Why SpendWell</a>
+            </div>
+            <div class="footer-credit">
+                <p>With <span class="heart-icon">❤️</span> from SpendWell Team</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
