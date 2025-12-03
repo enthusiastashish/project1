@@ -119,6 +119,11 @@ monthOptions.forEach(option => {
         }
         renderCalorieActivities();
         updateStats();
+
+        // Refresh charts if in statistics mode
+        if (statisticsMode) {
+            renderStatisticsCharts();
+        }
     });
 });
 
@@ -416,6 +421,11 @@ function deleteActivity(index) {
     activities.splice(index, 1);
     saveData();
     renderActivities();
+
+    // Refresh charts if in statistics mode
+    if (statisticsMode) {
+        renderStatisticsCharts();
+    }
 }
 
 function startEditActivity(index) {
@@ -870,6 +880,11 @@ function deleteCalorie(index) {
     calorieActivities.splice(index, 1);
     saveData();
     renderCalorieActivities();
+
+    // Refresh charts if in statistics mode
+    if (statisticsMode) {
+        renderStatisticsCharts();
+    }
 }
 
 function startEditCalorie(index) {
@@ -963,6 +978,12 @@ if (calorieEditForm) {
         }
         saveData();
         renderCalorieActivities();
+
+        // Refresh charts if in statistics mode
+        if (statisticsMode) {
+            renderStatisticsCharts();
+        }
+
         if (calorieEditModalOverlay) calorieEditModalOverlay.classList.remove('active');
         if (calorieEditForm) calorieEditForm.reset();
     });
@@ -1056,6 +1077,11 @@ if (expenseForm) {
         saveData();
         renderActivities();
 
+        // Refresh charts if in statistics mode
+        if (statisticsMode) {
+            renderStatisticsCharts();
+        }
+
         closeExpenseModal();
     });
 }
@@ -1135,6 +1161,11 @@ if (incomeForm) {
         activityPage = 1;
         saveData();
         renderActivities();
+
+        // Refresh charts if in statistics mode
+        if (statisticsMode) {
+            renderStatisticsCharts();
+        }
 
         closeIncomeModal();
     });
@@ -1219,21 +1250,23 @@ if (foodForm) {
         const currentYear = now.getFullYear();
 
         // Create a new food entry for calorie activities
+        const weekday = now.toLocaleString('en-US', { weekday: 'short' });
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
+
         const newFoodEntry = {
             expense: noteVal || `Food - ${categoryVal}`,
             calorie: calorieVal,
             category: categoryVal.charAt(0).toUpperCase() + categoryVal.slice(1),
             amount: amountVal,
             month: currentMonth,
-            year: currentYear
+            year: currentYear,
+            date: dateStr
         };
 
         // Add to calorie activities
         calorieActivities.unshift(newFoodEntry);
 
         // Also add to left side activity list (expenses/income)
-        const weekday = now.toLocaleString('en-US', { weekday: 'short' });
-        const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
 
         const newActivityEntry = {
             date: dateStr,
@@ -1255,6 +1288,410 @@ if (foodForm) {
         renderCalorieActivities();
         renderActivities();
 
+        // Refresh charts if in statistics mode
+        if (statisticsMode) {
+            renderStatisticsCharts();
+        }
+
         closeFoodModal();
+    });
+}
+
+// ============ Statistics Functionality ============
+let statisticsMode = false;
+let activityCategoryChartInstance = null;
+let calorieCategoryChartInstance = null;
+let junkFoodBarChartInstance = null;
+
+const statisticsBtn = document.getElementById('statisticsBtn');
+const activityStatisticsView = document.getElementById('activityStatisticsView');
+const calorieStatisticsView = document.getElementById('calorieStatisticsView');
+
+// Note: activityListEl and calorieActivityListEl are already declared earlier in the file
+
+// Statistics button click handler
+if (statisticsBtn) {
+    statisticsBtn.addEventListener('click', () => {
+        statisticsMode = !statisticsMode;
+        toggleStatisticsView();
+    });
+}
+
+function toggleStatisticsView() {
+    if (statisticsMode) {
+        // Show statistics, hide lists
+        if (activityListEl) activityListEl.style.display = 'none';
+        if (calorieActivityListEl) calorieActivityListEl.style.display = 'none';
+        if (activityStatisticsView) activityStatisticsView.style.display = 'block';
+        if (calorieStatisticsView) calorieStatisticsView.style.display = 'block';
+
+        // Render charts
+        renderStatisticsCharts();
+    } else {
+        // Show lists, hide statistics
+        if (activityListEl) activityListEl.style.display = '';
+        if (calorieActivityListEl) calorieActivityListEl.style.display = '';
+        if (activityStatisticsView) activityStatisticsView.style.display = 'none';
+        if (calorieStatisticsView) calorieStatisticsView.style.display = 'none';
+
+        // Destroy charts to free memory
+        destroyCharts();
+    }
+}
+
+// Destroy all chart instances
+function destroyCharts() {
+    if (activityCategoryChartInstance) {
+        activityCategoryChartInstance.destroy();
+        activityCategoryChartInstance = null;
+    }
+    if (calorieCategoryChartInstance) {
+        calorieCategoryChartInstance.destroy();
+        calorieCategoryChartInstance = null;
+    }
+    if (junkFoodBarChartInstance) {
+        junkFoodBarChartInstance.destroy();
+        junkFoodBarChartInstance = null;
+    }
+}
+
+// Render all statistics charts
+function renderStatisticsCharts() {
+    renderActivityCategoryChart();
+    renderCalorieCategoryChart();
+    renderJunkFoodBarChart();
+}
+
+// Generate data for activity category pie chart (left side)
+function getActivityCategoryData() {
+    // Filter activities by selected month
+    const monthFilteredActivities = filterActivitiesByMonth(activities);
+
+    const categoryTotals = {};
+
+    monthFilteredActivities.forEach(activity => {
+        const category = activity.category || 'Other';
+        const amount = Math.abs(activity.amount);
+
+        if (!categoryTotals[category]) {
+            categoryTotals[category] = 0;
+        }
+        categoryTotals[category] += amount;
+    });
+
+    const labels = Object.keys(categoryTotals);
+    const data = Object.values(categoryTotals);
+
+    return { labels, data };
+}
+
+// Render activity category pie chart
+function renderActivityCategoryChart() {
+    const ctx = document.getElementById('activityCategoryChart');
+    if (!ctx) return;
+
+    // Destroy existing chart if any
+    if (activityCategoryChartInstance) {
+        activityCategoryChartInstance.destroy();
+    }
+
+    const { labels, data } = getActivityCategoryData();
+
+    if (data.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+    }
+
+    activityCategoryChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                    '#4facfe', '#00f2fe', '#fa709a', '#fee140',
+                    '#43e97b', '#38f9d7', '#ff6b6b', '#ffa726',
+                    '#66bb6a', '#ab47bc', '#ec407a'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return `${label}: ₹${value.toLocaleString()}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Map calorie category to standardized categories (junk/healthy/homefood)
+function mapCalorieCategory(category) {
+    if (!category) return 'Other';
+
+    const lowerCategory = category.toLowerCase();
+
+    // Map to junk
+    if (lowerCategory === 'junk' ||
+        lowerCategory === 'fast food' ||
+        lowerCategory === 'dessert' ||
+        lowerCategory === 'unhealthy') {
+        return 'Junk';
+    }
+
+    // Map to healthy
+    if (lowerCategory === 'healthy' ||
+        lowerCategory === 'salad' ||
+        lowerCategory === 'fruit' ||
+        lowerCategory === 'vegetable') {
+        return 'Healthy';
+    }
+
+    // Map to homefood
+    if (lowerCategory === 'homefood' ||
+        lowerCategory === 'home food' ||
+        lowerCategory === 'homecooked' ||
+        lowerCategory === 'lunch' ||
+        lowerCategory === 'dinner') {
+        return 'Homefood';
+    }
+
+    // Default to Other for unknown categories
+    return 'Other';
+}
+
+// Generate data for calorie category pie chart (right side)
+function getCalorieCategoryData() {
+    // Filter calorie activities by selected month
+    const monthFilteredCalories = calorieActivities.filter(cal => {
+        const calMonth = cal.month !== undefined ? cal.month : null;
+        return calMonth === null || calMonth === selectedMonth;
+    });
+
+    const categoryTotals = {
+        'Junk': 0,
+        'Healthy': 0,
+        'Homefood': 0
+    };
+
+    monthFilteredCalories.forEach(cal => {
+        const mappedCategory = mapCalorieCategory(cal.category);
+        const calorie = Number(cal.calorie) || 0;
+
+        if (categoryTotals.hasOwnProperty(mappedCategory)) {
+            categoryTotals[mappedCategory] += calorie;
+        }
+    });
+
+    const labels = [];
+    const data = [];
+
+    // Only include categories that have data
+    Object.keys(categoryTotals).forEach(cat => {
+        if (categoryTotals[cat] > 0) {
+            labels.push(cat);
+            data.push(categoryTotals[cat]);
+        }
+    });
+
+    return { labels, data };
+}
+
+// Render calorie category pie chart
+function renderCalorieCategoryChart() {
+    const ctx = document.getElementById('calorieCategoryChart');
+    if (!ctx) return;
+
+    // Destroy existing chart if any
+    if (calorieCategoryChartInstance) {
+        calorieCategoryChartInstance.destroy();
+    }
+
+    const { labels, data } = getCalorieCategoryData();
+
+    if (data.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+    }
+
+    // Define colors for each category
+    const colorMap = {
+        'Junk': '#f5576c',
+        'Healthy': '#43e97b',
+        'Homefood': '#667eea'
+    };
+
+    const backgroundColors = labels.map(label => colorMap[label] || '#999');
+
+    calorieCategoryChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return `${label}: ${value} cal`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Generate data for junk food calories bar chart by day
+function getJunkFoodBarChartData() {
+    // Filter calorie activities by selected month
+    const monthFilteredCalories = calorieActivities.filter(cal => {
+        const calMonth = cal.month !== undefined ? cal.month : null;
+        return calMonth === null || calMonth === selectedMonth;
+    });
+
+    // Filter only junk food
+    const junkFoodEntries = monthFilteredCalories.filter(cal => {
+        const mappedCategory = mapCalorieCategory(cal.category);
+        return mappedCategory === 'Junk';
+    });
+
+    // Group by day - extract day from date or use expense field
+    const dailyJunkTotals = {};
+
+    junkFoodEntries.forEach(cal => {
+        // Try to extract day from date field if available
+        let day = null;
+        if (cal.date) {
+            const dayMatch = cal.date.match(/^(\d+)\//);
+            if (dayMatch) {
+                day = parseInt(dayMatch[1]);
+            }
+        }
+
+        // If no date, try to use a default or skip
+        if (!day) {
+            // Use current date as fallback or skip
+            day = new Date().getDate();
+        }
+
+        if (!dailyJunkTotals[day]) {
+            dailyJunkTotals[day] = 0;
+        }
+
+        const calorie = Number(cal.calorie) || 0;
+        dailyJunkTotals[day] += calorie;
+    });
+
+    // Sort days and prepare data
+    const sortedDays = Object.keys(dailyJunkTotals).map(Number).sort((a, b) => a - b);
+    const labels = sortedDays.map(day => `${day}/${selectedMonth + 1}`);
+    const data = sortedDays.map(day => dailyJunkTotals[day]);
+
+    return { labels, data };
+}
+
+// Render junk food calories bar chart
+function renderJunkFoodBarChart() {
+    const ctx = document.getElementById('junkFoodBarChart');
+    if (!ctx) return;
+
+    // Destroy existing chart if any
+    if (junkFoodBarChartInstance) {
+        junkFoodBarChartInstance.destroy();
+    }
+
+    const { labels, data } = getJunkFoodBarChartData();
+
+    if (data.length === 0) {
+        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        return;
+    }
+
+    junkFoodBarChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Junk Food Calories',
+                data: data,
+                backgroundColor: '#f5576c',
+                borderColor: '#f5576c',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Calories'
+                    },
+                    ticks: {
+                        stepSize: 100
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Days'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.parsed.y} cal`;
+                        }
+                    }
+                }
+            }
+        }
     });
 }

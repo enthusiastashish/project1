@@ -10,6 +10,7 @@
 
 
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 </head>
 
@@ -103,6 +104,13 @@
                     <button class="option-btn">Calendar</button>
                     <button class="option-btn">Yearly</button>
                 </div>
+                <!-- Statistics View - Category Pie Chart -->
+                <div class="statistics-view" id="activityStatisticsView" style="display: none;">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Expenses by Category</h3>
+                        <canvas id="activityCategoryChart"></canvas>
+                    </div>
+                </div>
                 <!-- Activity List: recent entries with date and amount -->
                 <div class="activity-list" id="activityList">
                     <div class="activity-item expense">
@@ -160,6 +168,17 @@
                         </div>
                     </div>
 
+                    <!-- Statistics View - Calorie Charts -->
+                    <div class="statistics-view" id="calorieStatisticsView" style="display: none;">
+                        <div class="chart-container">
+                            <h3 class="chart-title">Calories by Category</h3>
+                            <canvas id="calorieCategoryChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3 class="chart-title">Junk Food Calories by Day</h3>
+                            <canvas id="junkFoodBarChart"></canvas>
+                        </div>
+                    </div>
                     <!-- Calorie Activity List -->
                     <div class="calorie-activity-list" id="calorieActivityList">
                         <div class="calorie-activity-item">
