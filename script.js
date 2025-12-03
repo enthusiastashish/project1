@@ -4,6 +4,11 @@ const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 const overlay = document.getElementById('overlay');
 const mainContent = document.getElementById('mainContent');
 
+// Month filtering constants
+const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+let selectedMonth = new Date().getMonth(); // Default to current month (0-11)
+
 // Set user name
 const userName = document.getElementById('userName');
 const currentUser = 'Ashish'; // Replace with dynamic user data
@@ -43,6 +48,71 @@ document.addEventListener('click', () => {
 // Prevent closing when clicking inside the menu
 profileMenu.addEventListener('click', (e) => {
     e.stopPropagation();
+});
+
+// Month dropdown - click based
+const monthButton = document.getElementById('monthButton');
+const monthDropdown = document.getElementById('monthDropdown');
+const monthOptions = document.querySelectorAll('#monthDropdown a');
+
+// Set default month button text to current month
+if (monthButton) {
+    monthButton.textContent = monthNames[selectedMonth];
+}
+
+// Make month dropdown click-based instead of hover
+if (monthButton && monthDropdown) {
+    // Remove hover behavior and add click behavior
+    const monthDropdownParent = monthButton.closest('.month-dropdown');
+    if (monthDropdownParent) {
+        monthDropdownParent.classList.add('click-based');
+    }
+
+    monthButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        monthDropdown.classList.toggle('active');
+    });
+}
+
+// Close month menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (monthDropdown && !monthDropdown.contains(e.target) &&
+        monthButton && !monthButton.contains(e.target)) {
+        monthDropdown.classList.remove('active');
+    }
+});
+
+// Prevent closing when clicking inside the menu
+if (monthDropdown) {
+    monthDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+}
+
+// Handle month selection
+monthOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+        e.preventDefault();
+        const monthIndex = parseInt(option.getAttribute('data-month'));
+        selectedMonth = monthIndex;
+
+        // Update button text
+        if (monthButton) {
+            monthButton.textContent = monthNames[selectedMonth];
+        }
+
+        // Close dropdown
+        if (monthDropdown) {
+            monthDropdown.classList.remove('active');
+        }
+
+        // Reset pages and re-render everything
+        activityPage = 1;
+        caloriePage = 1;
+        renderActivities();
+        renderCalorieActivities();
+        updateStats();
+    });
 });
 
 // Floating Action Button
@@ -159,13 +229,14 @@ document.addEventListener('click', (e) => {
 });
 
 // Activity list data + rendering + filter by timeframe (Daily/Monthly/Calendar/Yearly)
+// Note: month is 0-based (0=January, 11=December)
 let activities = [
-    { date: '12/4 (Mon)', amount: -120, type: 'expense', period: 'Daily', note: 'Bought groceries', category: 'Groceries' },
-    { date: '11/4 (Sun)', amount: 110, type: 'income', period: 'Daily', note: 'Salary (partial)', category: 'Salary' },
-    { date: '10/4 (Sat)', amount: -130, type: 'expense', period: 'Monthly', note: 'Dinner out', category: 'Dining' },
-    { date: '09/4 (Fri)', amount: 200, type: 'income', period: 'Monthly', note: 'Freelance', category: 'Freelance' },
-    { date: '05/4 (Tue)', amount: -90, type: 'expense', period: 'Calendar', note: 'Taxi', category: 'Transport' },
-    { date: '01/4 (Wed)', amount: 500, type: 'income', period: 'Yearly', note: 'Bonus', category: 'Bonus' }
+    { date: '12/4 (Mon)', amount: -120, type: 'expense', period: 'Daily', note: 'Bought groceries', category: 'Groceries', month: 3 }, // April
+    { date: '11/4 (Sun)', amount: 110, type: 'income', period: 'Daily', note: 'Salary (partial)', category: 'Salary', month: 3 }, // April
+    { date: '10/4 (Sat)', amount: -130, type: 'expense', period: 'Monthly', note: 'Dinner out', category: 'Dining', month: 3 }, // April
+    { date: '09/4 (Fri)', amount: 200, type: 'income', period: 'Monthly', note: 'Freelance', category: 'Freelance', month: 3 }, // April
+    { date: '05/4 (Tue)', amount: -90, type: 'expense', period: 'Calendar', note: 'Taxi', category: 'Transport', month: 3 }, // April
+    { date: '01/4 (Wed)', amount: 500, type: 'income', period: 'Yearly', note: 'Bonus', category: 'Bonus', month: 3 } // April
 ];
 
 const activityListEl = document.getElementById('activityList');
@@ -186,6 +257,37 @@ function clearActivities() {
     while (activityListEl.firstChild) activityListEl.removeChild(activityListEl.firstChild);
 }
 
+// Helper function to extract month from date string (format: "12/4 (Mon)")
+function getMonthFromDateString(dateStr) {
+    if (!dateStr) return null;
+    // Date format is "day/month (weekday)" - extract month
+    const match = dateStr.match(/\/(\d+)\s*\(/);
+    if (match) {
+        return parseInt(match[1]) - 1; // Convert to 0-based month index
+    }
+    return null;
+}
+
+// Helper function to get month from activity (checks month property or extracts from date)
+function getActivityMonth(activity) {
+    if (activity.month !== undefined) {
+        return activity.month;
+    }
+    return getMonthFromDateString(activity.date);
+}
+
+// Filter activities by selected month
+function filterActivitiesByMonth(items) {
+    return items.filter(it => {
+        const itemMonth = getActivityMonth(it);
+        // If month is null (backward compatibility), include it only if it's the current month
+        if (itemMonth === null) {
+            return false; // Don't show items without month info when filtering
+        }
+        return itemMonth === selectedMonth;
+    });
+}
+
 function renderActivities(filterPeriod) {
     if (!activityListEl) return;
     // If a filter is supplied, treat it as a filter change and reset page
@@ -196,11 +298,14 @@ function renderActivities(filterPeriod) {
 
     clearActivities();
 
-    const items = activities.filter(it => !currentFilter || it.period === currentFilter);
+    // First filter by period, then by month
+    let items = activities.filter(it => !currentFilter || it.period === currentFilter);
+    items = filterActivitiesByMonth(items);
+
     if (items.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'activity-item';
-        empty.textContent = 'No entries';
+        empty.textContent = 'No data present';
         activityListEl.appendChild(empty);
         return;
     }
@@ -326,11 +431,11 @@ const initialPeriod = activeBtn ? activeBtn.textContent.trim() : 'Daily';
 
 // Calorie Activity List Data + Rendering
 let calorieActivities = [
-    { expense: 'Pizza', calorie: 280, category: 'Fast Food' },
-    { expense: 'Salad', calorie: 120, category: 'Healthy' },
-    { expense: 'Burger', calorie: 540, category: 'Fast Food' },
-    { expense: 'Smoothie', calorie: 150, category: 'Beverage' },
-    { expense: 'Sandwich', calorie: 350, category: 'Lunch' }
+    { expense: 'Pizza', calorie: 280, category: 'Fast Food', month: 3 }, // April
+    { expense: 'Salad', calorie: 120, category: 'Healthy', month: 3 }, // April
+    { expense: 'Burger', calorie: 540, category: 'Fast Food', month: 3 }, // April
+    { expense: 'Smoothie', calorie: 150, category: 'Beverage', month: 3 }, // April
+    { expense: 'Sandwich', calorie: 350, category: 'Lunch', month: 3 } // April
 ];
 
 const calorieActivityListEl = document.getElementById('calorieActivityList');
@@ -354,6 +459,21 @@ function loadData() {
         const c = localStorage.getItem(STORAGE_KEY_CAL);
         if (a) activities = JSON.parse(a);
         if (c) calorieActivities = JSON.parse(c);
+
+        // Backward compatibility: add month to activities that don't have it
+        activities.forEach(act => {
+            if (act.month === undefined) {
+                act.month = getMonthFromDateString(act.date);
+            }
+        });
+
+        // Backward compatibility: add month to calorie activities that don't have it
+        calorieActivities.forEach(cal => {
+            if (cal.month === undefined) {
+                // Default to current month for backward compatibility
+                cal.month = new Date().getMonth();
+            }
+        });
     } catch (e) {
         console.error('Could not load from localStorage', e);
     }
@@ -373,9 +493,25 @@ function renderCalorieActivities() {
     if (!calorieActivityListEl) return;
     clearCalorieActivities();
 
+    // Filter calorie activities by month
+    let filteredCalories = calorieActivities.filter(cal => {
+        const calMonth = cal.month !== undefined ? cal.month : null;
+        // If no month property, assume current month for backward compatibility
+        // In production, you'd want to add month when creating entries
+        return calMonth === null || calMonth === selectedMonth;
+    });
+
+    if (filteredCalories.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'calorie-activity-item';
+        empty.textContent = 'No data present';
+        calorieActivityListEl.appendChild(empty);
+        return;
+    }
+
     const start = (caloriePage - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    const pageItems = calorieActivities.slice(start, end);
+    const pageItems = filteredCalories.slice(start, end);
 
     pageItems.forEach(cal => {
         const el = document.createElement('div');
@@ -397,9 +533,14 @@ function renderCalorieActivities() {
         el.appendChild(cat);
         el.appendChild(calories);
 
-        // index for actions
-        const idx = calorieActivities.indexOf(cal);
-        if (idx >= 0) el.setAttribute('data-idx', String(idx));
+        // index for actions - need to find original index in full array
+        const originalIdx = calorieActivities.findIndex(c =>
+            c.expense === cal.expense &&
+            c.calorie === cal.calorie &&
+            c.category === cal.category &&
+            (cal.month === undefined || c.month === cal.month)
+        );
+        if (originalIdx >= 0) el.setAttribute('data-idx', String(originalIdx));
 
         const actions = document.createElement('div');
         actions.className = 'activity-actions';
@@ -427,7 +568,7 @@ function renderCalorieActivities() {
         calorieActivityListEl.appendChild(el);
     });
 
-    if (calorieActivities.length > end) {
+    if (filteredCalories.length > end) {
         const moreBtn = document.createElement('button');
         moreBtn.className = 'show-more-btn';
         moreBtn.textContent = 'Show more';
@@ -474,10 +615,19 @@ function updateStats() {
     const totalStatEl = document.getElementById('totalStat');
     const caloriesStatEl = document.getElementById('caloriesStat');
 
-    const incomeSum = activities.reduce((s, it) => s + (it.amount > 0 ? it.amount : 0), 0);
-    const expensesSum = activities.reduce((s, it) => s + (it.amount < 0 ? Math.abs(it.amount) : 0), 0);
+    // Filter activities by selected month
+    const monthFilteredActivities = filterActivitiesByMonth(activities);
+
+    // Filter calorie activities by selected month
+    const monthFilteredCalories = calorieActivities.filter(cal => {
+        const calMonth = cal.month !== undefined ? cal.month : null;
+        return calMonth === null || calMonth === selectedMonth;
+    });
+
+    const incomeSum = monthFilteredActivities.reduce((s, it) => s + (it.amount > 0 ? it.amount : 0), 0);
+    const expensesSum = monthFilteredActivities.reduce((s, it) => s + (it.amount < 0 ? Math.abs(it.amount) : 0), 0);
     const net = incomeSum - expensesSum;
-    const caloriesSum = calorieActivities.reduce((s, it) => s + (Number(it.calorie) || 0), 0);
+    const caloriesSum = monthFilteredCalories.reduce((s, it) => s + (Number(it.calorie) || 0), 0);
 
     if (incomeStatEl) incomeStatEl.textContent = formatCurrency(incomeSum);
     if (expensesStatEl) expensesStatEl.textContent = formatCurrency(expensesSum);
@@ -591,6 +741,7 @@ if (expenseForm) {
         const now = new Date();
         const weekday = now.toLocaleString('en-US', { weekday: 'short' });
         const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
+        const currentMonth = now.getMonth();
 
         // Add as expense (negative amount)
         if (expenseEditIndex !== null) {
@@ -599,6 +750,7 @@ if (expenseForm) {
             activities[expenseEditIndex].category = catVal || '';
             activities[expenseEditIndex].note = noteVal;
             activities[expenseEditIndex].date = dateStr;
+            activities[expenseEditIndex].month = currentMonth;
             expenseEditIndex = null;
         } else {
             const newEntry = {
@@ -607,7 +759,8 @@ if (expenseForm) {
                 type: 'expense',
                 period: currentFilter || 'Daily',
                 note: noteVal,
-                category: catVal || ''
+                category: catVal || '',
+                month: currentMonth
             };
             activities.unshift(newEntry);
         }
@@ -668,12 +821,14 @@ if (incomeForm) {
         const now = new Date();
         const weekday = now.toLocaleString('en-US', { weekday: 'short' });
         const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
+        const currentMonth = now.getMonth();
 
         if (incomeEditIndex !== null) {
             activities[incomeEditIndex].amount = Math.abs(amtVal);
             activities[incomeEditIndex].category = catVal || '';
             activities[incomeEditIndex].note = noteVal;
             activities[incomeEditIndex].date = dateStr;
+            activities[incomeEditIndex].month = currentMonth;
             incomeEditIndex = null;
         } else {
             const newEntry = {
@@ -682,7 +837,8 @@ if (incomeForm) {
                 type: 'income',
                 period: currentFilter || 'Daily',
                 note: noteVal,
-                category: catVal || ''
+                category: catVal || '',
+                month: currentMonth
             };
             activities.unshift(newEntry);
         }
@@ -768,19 +924,23 @@ if (foodForm) {
 
         const noteVal = foodNote.value.trim();
 
+        // Get current month
+        const now = new Date();
+        const currentMonth = now.getMonth();
+
         // Create a new food entry for calorie activities
         const newFoodEntry = {
             expense: noteVal || `Food - ${categoryVal}`,
             calorie: calorieVal,
             category: categoryVal.charAt(0).toUpperCase() + categoryVal.slice(1),
-            amount: amountVal
+            amount: amountVal,
+            month: currentMonth
         };
 
         // Add to calorie activities
         calorieActivities.unshift(newFoodEntry);
 
         // Also add to left side activity list (expenses/income)
-        const now = new Date();
         const weekday = now.toLocaleString('en-US', { weekday: 'short' });
         const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
 
@@ -790,7 +950,8 @@ if (foodForm) {
             type: 'expense',
             period: currentFilter || 'Daily',
             note: noteVal || '',
-            category: 'Food' // Fixed category for all food entries
+            category: 'Food', // Fixed category for all food entries
+            month: currentMonth
         };
 
         activities.unshift(newActivityEntry);

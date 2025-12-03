@@ -110,6 +110,23 @@ body {
     display: block;
 }
 
+/* Month dropdown - click-based (disable hover) */
+.dropdown.month-dropdown.click-based .dropdown-content {
+    display: none;
+}
+
+.dropdown.month-dropdown.click-based .dropdown-content.active {
+    display: block;
+}
+
+.dropdown.month-dropdown.click-based:hover .dropdown-content {
+    display: none;
+}
+
+.dropdown.month-dropdown.click-based:hover .dropdown-content.active {
+    display: block;
+}
+
 /* Profile Dropdown - Click based */
 .profile-dropdown {
     position: relative;
