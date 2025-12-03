@@ -768,7 +768,7 @@ if (foodForm) {
 
         const noteVal = foodNote.value.trim();
 
-        // Create a new food entry
+        // Create a new food entry for calorie activities
         const newFoodEntry = {
             expense: noteVal || `Food - ${categoryVal}`,
             calorie: calorieVal,
@@ -779,10 +779,28 @@ if (foodForm) {
         // Add to calorie activities
         calorieActivities.unshift(newFoodEntry);
 
-        // Reset to first page and re-render
+        // Also add to left side activity list (expenses/income)
+        const now = new Date();
+        const weekday = now.toLocaleString('en-US', { weekday: 'short' });
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1} (${weekday})`;
+
+        const newActivityEntry = {
+            date: dateStr,
+            amount: -Math.abs(amountVal), // Negative because it's an expense
+            type: 'expense',
+            period: currentFilter || 'Daily',
+            note: noteVal || '',
+            category: 'Food' // Fixed category for all food entries
+        };
+
+        activities.unshift(newActivityEntry);
+
+        // Reset to first page and re-render both lists
         caloriePage = 1;
+        activityPage = 1;
         saveData();
         renderCalorieActivities();
+        renderActivities();
 
         closeFoodModal();
     });
