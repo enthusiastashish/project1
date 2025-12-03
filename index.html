@@ -304,6 +304,47 @@
         </div>
     </div>
 
+    <!-- Food Modal (opened from FAB Food) -->
+    <div class="modal-overlay" id="foodModalOverlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="foodModalTitle">
+            <div class="modal-header">
+                <h3 id="foodModalTitle">Add Food</h3>
+                <button class="modal-close" id="foodModalClose">×</button>
+            </div>
+            <form id="foodForm" class="modal-body">
+                <label class="field">
+                    <div class="field-label">Amount</div>
+                    <input type="number" step="0.01" id="foodAmount" placeholder="e.g. 150" required />
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Category</div>
+                    <select id="foodCategory" required>
+                        <option value="">Select a category</option>
+                        <option value="healthy">Healthy</option>
+                        <option value="junk">Junk</option>
+                        <option value="homefood">Homefood</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Calorie</div>
+                    <input type="number" step="0.01" id="foodCalorie" placeholder="e.g. 250" required />
+                </label>
+
+                <label class="field">
+                    <div class="field-label">Note</div>
+                    <input type="text" id="foodNote" placeholder="Optional note" />
+                </label>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="foodCancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="foodSubmit">Add Food</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Calorie Edit Modal -->
     <div class="modal-overlay" id="calorieEditModalOverlay" aria-hidden="true">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="calorieEditModalTitle">

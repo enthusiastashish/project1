@@ -75,6 +75,11 @@ fabOptions.forEach(option => {
         if (selectedOption === 'income') {
             openIncomeModal();
         }
+
+        // Open the food dialog when clicking the Food option
+        if (selectedOption === 'food') {
+            openFoodModal();
+        }
     });
 });
 
@@ -687,5 +692,98 @@ if (incomeForm) {
         renderActivities();
 
         closeIncomeModal();
+    });
+}
+
+// -------- Food modal logic (FAB) --------
+const foodModalOverlay = document.getElementById('foodModalOverlay');
+const foodModalClose = document.getElementById('foodModalClose');
+const foodCancel = document.getElementById('foodCancel');
+const foodForm = document.getElementById('foodForm');
+const foodAmount = document.getElementById('foodAmount');
+const foodCategory = document.getElementById('foodCategory');
+const foodCalorie = document.getElementById('foodCalorie');
+const foodNote = document.getElementById('foodNote');
+
+function openFoodModal() {
+    if (!foodModalOverlay) return;
+    foodModalOverlay.classList.add('active');
+    foodModalOverlay.setAttribute('aria-hidden', 'false');
+    setTimeout(() => { if (foodAmount) foodAmount.focus(); }, 80);
+}
+
+function closeFoodModal() {
+    if (!foodModalOverlay) return;
+    foodModalOverlay.classList.remove('active');
+    foodModalOverlay.setAttribute('aria-hidden', 'true');
+    if (foodForm) foodForm.reset();
+}
+
+if (foodModalClose) foodModalClose.addEventListener('click', closeFoodModal);
+if (foodCancel) foodCancel.addEventListener('click', closeFoodModal);
+
+if (foodModalOverlay) {
+    foodModalOverlay.addEventListener('click', (e) => {
+        if (e.target === foodModalOverlay) closeFoodModal();
+    });
+}
+
+// Disable keyboard input on category select field
+if (foodCategory) {
+    foodCategory.addEventListener('keydown', (e) => {
+        // Allow only arrow keys, Enter, and Escape for navigation
+        const allowedKeys = ['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'];
+        if (!allowedKeys.includes(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    // Prevent typing in the select field
+    foodCategory.addEventListener('keypress', (e) => {
+        e.preventDefault();
+    });
+}
+
+if (foodForm) {
+    foodForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const amountVal = Number(foodAmount.value || 0);
+        if (!amountVal || isNaN(amountVal) || amountVal <= 0) {
+            alert('Please enter a valid amount (must be greater than 0)');
+            return;
+        }
+
+        const categoryVal = foodCategory.value.trim();
+        if (!categoryVal || !['healthy', 'junk', 'homefood'].includes(categoryVal)) {
+            alert('Please select a valid category (healthy, junk, or homefood)');
+            return;
+        }
+
+        const calorieVal = Number(foodCalorie.value || 0);
+        if (!calorieVal || isNaN(calorieVal) || calorieVal <= 0) {
+            alert('Please enter a valid calorie value (must be greater than 0)');
+            return;
+        }
+
+        const noteVal = foodNote.value.trim();
+
+        // Create a new food entry
+        const newFoodEntry = {
+            expense: noteVal || `Food - ${categoryVal}`,
+            calorie: calorieVal,
+            category: categoryVal.charAt(0).toUpperCase() + categoryVal.slice(1),
+            amount: amountVal
+        };
+
+        // Add to calorie activities
+        calorieActivities.unshift(newFoodEntry);
+
+        // Reset to first page and re-render
+        caloriePage = 1;
+        saveData();
+        renderCalorieActivities();
+
+        closeFoodModal();
     });
 }
